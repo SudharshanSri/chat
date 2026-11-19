@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Chat Application - Login</title>
+
+    <link rel="stylesheet" href="auth.css">
+
+</head>
+
+<body class="auth-body">
+
+    <div class="auth-orb auth-orb-1"></div>
+    <div class="auth-orb auth-orb-2"></div>
+
+    <button class="auth-theme-toggle" id="authThemeToggle" title="Toggle dark mode" type="button">🌙</button>
+
+    <div class="auth-card">
+
+        <div class="auth-logo">💬</div>
+
+        <h1>Welcome Back</h1>
+        <p class="auth-subtitle">Log in to continue chatting</p>
+
+        <div class="auth-message" id="authMessage"></div>
+
+        <form id="loginForm" novalidate>
+
+            <div class="auth-field">
+                <input type="text" id="username" name="a" placeholder=" " required autocomplete="username">
+                <label for="username">Username</label>
+            </div>
+
+            <div class="auth-field has-toggle">
+                <input type="password" id="password" name="b" placeholder=" " required autocomplete="current-password">
+                <label for="password">Password</label>
+                <button type="button" class="auth-pw-toggle" id="togglePassword" title="Show password">👁️</button>
+            </div>
+
+            <div class="auth-row">
+                <label class="auth-remember">
+                    <input type="checkbox" id="remember" name="remember">
+                    Remember me
+                </label>
+                <a href="#" class="auth-forgot" id="forgotPasswordLink">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="auth-submit" id="loginSubmitBtn">
+                <span class="auth-spinner"></span>
+                <span class="auth-submit-label">Log In</span>
+            </button>
+
+        </form>
+
+        <div class="auth-switch">
+            Don't have an account? <a href="/signup">Create one</a>
+        </div>
+
+    </div>
+
+    <script>
+
+        // ---- Dark mode support (shared theme key with the chat app) ----
+        const THEME_KEY = "chatapp_theme";
+
+        function applyAuthTheme(theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+            localStorage.setItem(THEME_KEY, theme);
+            document.getElementById("authThemeToggle").textContent = theme === "dark" ? "☀️" : "🌙";
+        }
+
+        applyAuthTheme(localStorage.getItem(THEME_KEY) || "light");
+
+        document.getElementById("authThemeToggle").onclick = function () {
+            const current = document.documentElement.getAttribute("data-theme") || "light";
+            applyAuthTheme(current === "dark" ? "light" : "dark");
+        };
+
+        // ---- Password show/hide ----
+        document.getElementById("togglePassword").onclick = function () {
+            const input = document.getElementById("password");
+            const showing = input.type === "text";
+            input.type = showing ? "password" : "text";
+            this.textContent = showing ? "👁️" : "🙈";
+        };
+
+        // ---- Forgot password (placeholder — no backend reset flow exists yet) ----
+        document.getElementById("forgotPasswordLink").onclick = function (e) {
+            e.preventDefault();
+            showAuthMessage("Please contact support to reset your password for now.", "error");
+        };
+
+        function showAuthMessage(text, type) {
+            const box = document.getElementById("authMessage");
+            box.textContent = (type === "success" ? "✅ " : "⚠️ ") + text;
+            box.className = "auth-message show " + type;
+        }
+
+        // ---- Submit via fetch so we can show inline errors + a loading spinner ----
+        document.getElementById("loginForm").addEventListener("submit", async function (e) {
+
+            e.preventDefault();
+
+            const btn = document.getElementById("loginSubmitBtn");
+            const label = btn.querySelector(".auth-submit-label");
+
+            const payload = {
+                a: document.getElementById("username").value.trim(),
+                b: document.getElementById("password").value,
+                remember: document.getElementById("remember").checked
+            };
+
+            if (!payload.a || !payload.b) {
+                showAuthMessage("Please fill in both fields", "error");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add("loading");
+            label.textContent = "Logging in...";
+
+            try {
+
+                const res = await fetch("/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    showAuthMessage("Login successful! Redirecting...", "success");
+                    setTimeout(() => { window.location.href = data.redirect || "/chat"; }, 500);
+                } else {
+                    showAuthMessage(data.message || "Login failed", "error");
+                    btn.disabled = false;
+                    btn.classList.remove("loading");
+                    label.textContent = "Log In";
+                }
+
+            } catch (err) {
+                console.error(err);
+                showAuthMessage("Something went wrong. Please try again.", "error");
+                btn.disabled = false;
+                btn.classList.remove("loading");
+                label.textContent = "Log In";
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>

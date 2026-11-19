@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Chat Application - Sign Up</title>
+
+    <link rel="stylesheet" href="auth.css">
+
+</head>
+
+<body class="auth-body">
+
+    <div class="auth-orb auth-orb-1"></div>
+    <div class="auth-orb auth-orb-2"></div>
+
+    <button class="auth-theme-toggle" id="authThemeToggle" title="Toggle dark mode" type="button">🌙</button>
+
+    <div class="auth-card">
+
+        <div class="auth-logo">💬</div>
+
+        <h1>Create Account</h1>
+        <p class="auth-subtitle">Join the conversation today</p>
+
+        <div class="auth-message" id="authMessage"></div>
+
+        <form id="signupForm" novalidate>
+
+            <div class="auth-field">
+                <input type="text" id="username" name="username" placeholder=" " required autocomplete="username" minlength="3" maxlength="24">
+                <label for="username">Username</label>
+            </div>
+
+            <div class="auth-field">
+                <input type="email" id="email" name="email" placeholder=" " required autocomplete="email">
+                <label for="email">Email Address</label>
+            </div>
+
+            <div class="auth-field has-toggle">
+                <input type="password" id="password" name="password" placeholder=" " required autocomplete="new-password" minlength="6">
+                <label for="password">Password</label>
+                <button type="button" class="auth-pw-toggle" id="togglePassword" title="Show password">👁️</button>
+            </div>
+
+            <div class="auth-field has-toggle">
+                <input type="password" id="confirmPassword" placeholder=" " required autocomplete="new-password" minlength="6">
+                <label for="confirmPassword">Confirm Password</label>
+                <button type="button" class="auth-pw-toggle" id="toggleConfirmPassword" title="Show password">👁️</button>
+            </div>
+
+            <button type="submit" class="auth-submit" id="signupSubmitBtn">
+                <span class="auth-spinner"></span>
+                <span class="auth-submit-label">Create Account</span>
+            </button>
+
+        </form>
+
+        <div class="auth-switch">
+            Already have an account? <a href="/">Log in</a>
+        </div>
+
+    </div>
+
+    <script>
+
+        // ---- Dark mode support (shared theme key with the chat app) ----
+        const THEME_KEY = "chatapp_theme";
+
+        function applyAuthTheme(theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+            localStorage.setItem(THEME_KEY, theme);
+            document.getElementById("authThemeToggle").textContent = theme === "dark" ? "☀️" : "🌙";
+        }
+
+        applyAuthTheme(localStorage.getItem(THEME_KEY) || "light");
+
+        document.getElementById("authThemeToggle").onclick = function () {
+            const current = document.documentElement.getAttribute("data-theme") || "light";
+            applyAuthTheme(current === "dark" ? "light" : "dark");
+        };
+
+        // ---- Password show/hide (both fields) ----
+        function wireToggle(toggleId, inputId) {
+            document.getElementById(toggleId).onclick = function () {
+                const input = document.getElementById(inputId);
+                const showing = input.type === "text";
+                input.type = showing ? "password" : "text";
+                this.textContent = showing ? "👁️" : "🙈";
+            };
+        }
+        wireToggle("togglePassword", "password");
+        wireToggle("toggleConfirmPassword", "confirmPassword");
+
+        function showAuthMessage(text, type) {
+            const box = document.getElementById("authMessage");
+            box.textContent = (type === "success" ? "✅ " : "⚠️ ") + text;
+            box.className = "auth-message show " + type;
+        }
+
+        document.getElementById("signupForm").addEventListener("submit", async function (e) {
+
+            e.preventDefault();
+
+            const btn = document.getElementById("signupSubmitBtn");
+            const label = btn.querySelector(".auth-submit-label");
+
+            const username = document.getElementById("username").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+
+            if (!username || !email || !password || !confirmPassword) {
+                showAuthMessage("Please fill in every field", "error");
+                return;
+            }
+            if (password.length < 6) {
+                showAuthMessage("Password must be at least 6 characters", "error");
+                return;
+            }
+            if (password !== confirmPassword) {
+                showAuthMessage("Passwords do not match", "error");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add("loading");
+            label.textContent = "Creating account...";
+
+            try {
+
+                const res = await fetch("/signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    showAuthMessage("Account created! Redirecting to login...", "success");
+                    setTimeout(() => { window.location.href = data.redirect || "/"; }, 700);
+                } else {
+                    showAuthMessage(data.message || "Signup failed", "error");
+                    btn.disabled = false;
+                    btn.classList.remove("loading");
+                    label.textContent = "Create Account";
+                }
+
+            } catch (err) {
+                console.error(err);
+                showAuthMessage("Something went wrong. Please try again.", "error");
+                btn.disabled = false;
+                btn.classList.remove("loading");
+                label.textContent = "Create Account";
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>

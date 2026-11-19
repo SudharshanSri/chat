@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Chat Application</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <div class="container" id="appShell">
+
+        <!-- Sidebar -->
+
+        <div class="sidebar" id="sidebar">
+
+            <div class="sidebar-top">
+
+                <h2>💬 Chat App</h2>
+
+                <div class="sidebar-top-actions">
+                    <button class="icon-btn" id="newGroupBtn" title="New group"><i data-lucide="users-round"></i></button>
+                    <button class="icon-btn" id="myProfileBtn" title="My profile"><i data-lucide="circle-user"></i></button>
+                    <button class="icon-btn" id="starredBtn" title="Starred Messages"><i data-lucide="star"></i></button>
+                    <button class="icon-btn" id="themeToggleBtn" title="Toggle dark mode"><i data-lucide="moon"></i></button>
+                    <button class="icon-btn" id="logoutBtn" title="Log out"><i data-lucide="log-out"></i></button>
+                    <button class="icon-btn sidebar-close-btn" id="sidebarCloseBtn" title="Close"><i data-lucide="x"></i></button>
+                </div>
+
+            </div>
+
+            <div class="sidebar-search">
+                <i data-lucide="search" class="sidebar-search-icon"></i>
+                <input type="text" id="userSearch" placeholder="Search users...">
+            </div>
+
+            <h3>Chats</h3>
+
+            <ul id="contacts">
+                <!-- Premium loading skeleton: replaced automatically the moment
+                     the first "contactsList"/"groupsList" socket event arrives -->
+                <li class="skeleton-item"><div class="skeleton-avatar"></div><div style="flex:1"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></li>
+                <li class="skeleton-item"><div class="skeleton-avatar"></div><div style="flex:1"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></li>
+                <li class="skeleton-item"><div class="skeleton-avatar"></div><div style="flex:1"><div class="skeleton-line"></div><div class="skeleton-line short"></div></div></li>
+            </ul>
+
+        </div>
+
+        <!-- Mobile overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Chat Area -->
+
+        <div class="chat-area">
+
+            <!-- Header -->
+
+            <div class="chat-header">
+
+                <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" title="Chats"><i data-lucide="menu"></i></button>
+
+                <div class="chat-header-info" id="chatHeaderInfo" title="View info">
+                    <div class="chat-header-avatar" id="chatAvatar">?</div>
+                    <div class="chat-header-text">
+                        <h2 id="chatUser">Select a chat</h2>
+                        <p id="typingStatus"></p>
+                    </div>
+                </div>
+
+                <div class="chat-header-actions">
+                    <button class="icon-btn" id="groupMembersBtn" title="Group members" style="display:none;"><i data-lucide="users-round"></i></button>
+                    <button class="icon-btn" id="chatSearchBtn" title="Search in conversation"><i data-lucide="search"></i></button>
+                    <button class="icon-btn" id="pinnedListBtn" title="Pinned messages"><i data-lucide="pin"></i></button>
+                    <button class="icon-btn" id="wallpaperBtn" title="Change wallpaper"><i data-lucide="image"></i></button>
+                </div>
+
+            </div>
+
+            <!-- In-chat search bar -->
+            <div class="chat-search-bar" id="chatSearchBar">
+                <i data-lucide="search"></i>
+                <input type="text" id="chatSearchInput" placeholder="Search in this conversation...">
+                <span id="chatSearchCount">0/0</span>
+                <button class="icon-btn" id="chatSearchPrev" title="Previous"><i data-lucide="chevron-up"></i></button>
+                <button class="icon-btn" id="chatSearchNext" title="Next"><i data-lucide="chevron-down"></i></button>
+                <button class="icon-btn" id="chatSearchClose" title="Close"><i data-lucide="x"></i></button>
+            </div>
+
+            <!-- Pinned messages bar -->
+            <div class="pinned-bar" id="pinnedBar" style="display:none;">
+                <i data-lucide="pin"></i>
+                <div class="pinned-bar-text" id="pinnedBarText"></div>
+                <button class="icon-btn" id="pinnedBarExpand" title="View all pinned"><i data-lucide="chevron-down"></i></button>
+            </div>
+
+            <!-- Messages -->
+
+            <div class="chat-box" id="messages">
+
+            </div>
+
+            <!-- Input -->
+
+            <div id="replyPreview" class="reply-preview"></div>
+
+            <div class="chat-input">
+
+                <button id="emojiBtn">😊</button>
+                <div id="emojiBox"
+                    style="display:none; position:absolute; bottom:70px; left:20px;">
+                </div>
+
+                <button id="fileBtn"><i data-lucide="paperclip"></i></button>
+                <input type="file" id="imageInput" accept="image/*" hidden>
+
+                <button id="voiceBtn" title="Record voice message"><i data-lucide="mic"></i></button>
+
+                <div id="recordPanel" style="display:none;">
+
+                    <span class="recording-dot"></span>
+                    <span id="timer">00:00</span>
+
+                    <button id="stopBtn" title="Stop recording"><i data-lucide="square"></i></button>
+
+                    <button id="cancelBtn" title="Cancel"><i data-lucide="trash-2"></i></button>
+
+                    <button id="sendVoiceBtn" title="Send voice message"><i data-lucide="send"></i></button>
+
+                </div>
+
+                <audio id="previewAudio" controls style="display:none;"></audio>
+
+                <input type="text" id="msg" placeholder="Type your message...">
+
+                <button id="sendBtn">
+                    Send
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Forward modal -->
+    <div class="modal-overlay" id="forwardModal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Forward message</h3>
+                <button class="icon-btn" id="forwardModalClose"><i data-lucide="x"></i></button>
+            </div>
+            <input type="text" id="forwardSearch" placeholder="Search users..." class="modal-search">
+            <ul id="forwardUserList" class="modal-list"></ul>
+            <button id="forwardConfirmBtn" class="modal-confirm-btn">Forward</button>
+        </div>
+    </div>
+
+    <!-- Starred messages modal -->
+    <div class="modal-overlay" id="starredModal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Starred Messages</h3>
+                <button class="icon-btn" id="starredModalClose"><i data-lucide="x"></i></button>
+            </div>
+            <ul id="starredList" class="modal-list starred-list"></ul>
+        </div>
+    </div>
+
+    <!-- Pinned messages modal -->
+    <div class="modal-overlay" id="pinnedModal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Pinned Messages</h3>
+                <button class="icon-btn" id="pinnedModalClose"><i data-lucide="x"></i></button>
+            </div>
+            <ul id="pinnedList" class="modal-list starred-list"></ul>
+        </div>
+    </div>
+
+    <!-- New Group modal -->
+    <div class="modal-overlay" id="groupCreateModal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>New Group</h3>
+                <button class="icon-btn" id="groupCreateModalClose"><i data-lucide="x"></i></button>
+            </div>
+
+            <div class="group-create-photo-row">
+                <div class="group-photo-picker" id="groupPhotoPicker">
+                    <img id="groupPhotoPreview" style="display:none;">
+                    <i data-lucide="camera" id="groupPhotoIcon"></i>
+                </div>
+                <input type="file" id="groupPhotoInput" accept="image/*" hidden>
+                <input type="text" id="groupNameInput" placeholder="Group name" class="modal-search" style="margin:0;">
+            </div>
+
+            <p class="modal-subheading">Add members</p>
+            <input type="text" id="groupMemberSearch" placeholder="Search users..." class="modal-search">
+            <ul id="groupMemberList" class="modal-list"></ul>
+
+            <button id="groupCreateConfirmBtn" class="modal-confirm-btn">Create Group</button>
+        </div>
+    </div>
+
+    <!-- Group Info modal -->
+    <div class="modal-overlay" id="groupInfoModal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Group Info</h3>
+                <button class="icon-btn" id="groupInfoModalClose"><i data-lucide="x"></i></button>
+            </div>
+
+            <div class="profile-header">
+                <div class="profile-avatar-large" id="groupInfoAvatar"></div>
+                <h3 id="groupInfoName"></h3>
+                <p id="groupInfoMemberCount" class="profile-sub"></p>
+            </div>
+
+            <div class="group-info-actions" id="groupInfoAddRow" style="display:none;">
+                <input type="text" id="groupAddMemberSearch" placeholder="Add a member..." class="modal-search">
+                <ul id="groupAddMemberList" class="modal-list"></ul>
+            </div>
+
+            <p class="modal-subheading">Members</p>
+            <ul id="groupInfoMemberList" class="modal-list"></ul>
+        </div>
+    </div>
+
+    <!-- Profile modal (view own or another user's profile) -->
+    <div class="modal-overlay" id="profileModal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="profileModalTitle">Profile</h3>
+                <button class="icon-btn" id="profileModalClose"><i data-lucide="x"></i></button>
+            </div>
+
+            <div class="profile-header">
+                <div class="profile-avatar-large" id="profileAvatar"></div>
+                <input type="file" id="profileAvatarInput" accept="image/*" hidden>
+                <div class="profile-avatar-actions" id="profileAvatarActions" style="display:none;">
+                    <button class="modal-link-btn" id="profileChangePhotoBtn">Change photo</button>
+                    <button class="modal-link-btn modal-link-btn-danger" id="profileRemovePhotoBtn">Remove photo</button>
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <label>Name</label>
+                <p id="profileNameView"></p>
+                <input type="text" id="profileNameInput" style="display:none;" maxlength="40">
+            </div>
+
+            <div class="profile-field">
+                <label>Username</label>
+                <p id="profileUsernameView"></p>
+                <input type="text" id="profileUsernameInput" style="display:none;" maxlength="24" placeholder="new-username">
+                <small class="profile-field-hint" id="profileUsernameHint" style="display:none;">Changing your username will sign you out so you can log back in with the new one.</small>
+            </div>
+
+            <div class="profile-field">
+                <label>Email</label>
+                <p id="profileEmailView"></p>
+            </div>
+
+            <div class="profile-field">
+                <label>About</label>
+                <p id="profileBioView"></p>
+                <textarea id="profileBioInput" style="display:none;" rows="2" maxlength="150" placeholder="Say something about yourself..."></textarea>
+            </div>
+
+            <div class="profile-field">
+                <label>Status message</label>
+                <p id="profileStatusMsgView"></p>
+                <input type="text" id="profileStatusMsgInput" style="display:none;" maxlength="120" placeholder="What's on your mind?">
+            </div>
+
+            <div class="profile-field">
+                <label>Presence</label>
+                <p id="profileStatusView"></p>
+            </div>
+
+            <div class="profile-field">
+                <label>Joined</label>
+                <p id="profileJoinedView"></p>
+            </div>
+
+            <div class="profile-field" id="profileWallpaperField" style="display:none;">
+                <label>Chat wallpaper</label>
+                <div class="wallpaper-swatch-row" id="wallpaperSwatchRow"></div>
+            </div>
+
+            <div class="profile-field" id="profilePasswordSection" style="display:none;">
+                <label>Change password</label>
+                <div class="password-input-wrap">
+                    <input type="password" id="profileCurrentPassword" placeholder="Current password">
+                    <button type="button" class="pw-toggle-btn" data-target="profileCurrentPassword"><i data-lucide="eye"></i></button>
+                </div>
+                <div class="password-input-wrap">
+                    <input type="password" id="profileNewPassword" placeholder="New password (min 6 characters)">
+                    <button type="button" class="pw-toggle-btn" data-target="profileNewPassword"><i data-lucide="eye"></i></button>
+                </div>
+                <button class="modal-link-btn" id="profileChangePasswordBtn">Update password</button>
+            </div>
+
+            <button class="modal-confirm-btn" id="profileEditBtn" style="display:none;">Edit Profile</button>
+            <button class="modal-confirm-btn" id="profileSaveBtn" style="display:none;">Save Changes</button>
+            <button class="modal-cancel-btn" id="profileCancelBtn" style="display:none;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Logout confirmation dialog -->
+    <div class="modal-overlay" id="logoutConfirmModal" style="display:none;">
+        <div class="modal-box modal-box-small">
+            <div class="modal-header">
+                <h3>Log out?</h3>
+                <button class="icon-btn" id="logoutConfirmClose"><i data-lucide="x"></i></button>
+            </div>
+            <p class="confirm-dialog-text">You'll need to sign in again to access your chats on this device.</p>
+            <div class="confirm-dialog-actions">
+                <button class="modal-cancel-btn" id="logoutCancelBtn">Cancel</button>
+                <button class="modal-confirm-btn modal-confirm-btn-danger" id="logoutConfirmBtn">Log out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toastContainer"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script src="app.js"></script>
+
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+
+</body>
+
+</html>
